@@ -14,7 +14,7 @@ function MapPage() {
 
   const fetchApi = () => {
     axios
-      .get(`http://api.citybik.es/v2/networks`, {})
+      .get(`http://api.citybik.es/v2/networks`)
       .then((response) => {
         setNetworks(response.data.networks);
       })
@@ -34,13 +34,12 @@ function MapPage() {
     <Div>
       {isLoaded ? (
         <GoogleMap
+          id="map"
           mapContainerStyle={{ width: "100%", height: "100%" }}
           center={{ lat: 38.72726949547492, lng: -9.139262879074261 }}
           zoom={10}
-          disableDefaultUI
         >
           {networks.map((position) => {
-            console.log(position.location.latitude);
             return (
               <Marker
                 position={{
