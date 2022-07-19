@@ -1,5 +1,10 @@
 import React from "react";
-import { GoogleMap, useJsApiLoader, Marker } from "@react-google-maps/api";
+import {
+  GoogleMap,
+  useJsApiLoader,
+  Marker,
+  MarkerClusterer,
+} from "@react-google-maps/api";
 import styled from "styled-components";
 import { useState, useEffect } from "react";
 import axios from "axios";
@@ -30,6 +35,31 @@ function MapPage() {
     googleMapsApiKey: `${process.env.REACT_APP_API_KEY}`,
   });
 
+  const getCountries = () => {
+    const oCountries = new Map();
+    let aCor;
+    networks.forEach((oNetwork) => {
+      aCor = oCountries.get(oNetwork.location.country);
+      if (aCor === undefined) {
+        oCountries.set(oNetwork.location.country, [oNetwork.location]);
+      } else {
+        aCor.push(oNetwork.location);
+        oCountries.set(oNetwork.location.country, aCor);
+      }
+    });
+    let aMarkerClusters = [];
+    let aMarkers = [];
+    oCountries.forEach((networks) => {
+      networks.forEach((location) => {
+        aMarkers.push(new Marker({ position: {lat: location.latitude , lng: location.longitude} }));
+
+      });
+      aMarkerClusters.push(new MarkerClusterer({ aMarkers }));
+      aMarkers = [];
+    });
+    debugger;
+  };
+
   return (
     <Div>
       {isLoaded ? (
@@ -39,7 +69,8 @@ function MapPage() {
           center={{ lat: 38.72726949547492, lng: -9.139262879074261 }}
           zoom={10}
         >
-          {networks.map((position) => {
+          {getCountries()}
+          {/*   {networks.map((position) => {
             return (
               <Marker
                 position={{
@@ -48,7 +79,7 @@ function MapPage() {
                 }}
               />
             );
-          })}
+          })} */}
         </GoogleMap>
       ) : (
         <></>
