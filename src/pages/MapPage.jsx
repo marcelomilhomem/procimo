@@ -11,11 +11,13 @@ import axios from "axios";
 
 const Div = styled.div`
   height: 80vh;
-  width: 80vw;
+  width: 60vw;
 `;
 
 function MapPage() {
+
   const [networks, setNetworks] = useState([]);
+  const [clusters, setClusters] = useState(new Map());
 
   const fetchApi = () => {
     axios
@@ -30,35 +32,27 @@ function MapPage() {
     fetchApi();
   }, []);
 
+  //Descrever a função
+  const onMapLoaded = () => {
+    const oCountries = new Map();
+    let aCoordinates;
+    networks.forEach((oNetwork) => {
+      aCoordinates = oCountries.get(oNetwork.location.country);
+      if (!aCoordinates) {
+        oCountries.set(oNetwork.location.country, [oNetwork.location]);
+      } else {
+        aCoordinates.push(oNetwork.location);
+        oCountries.set(oNetwork.location.country, aCoordinates);
+      }
+    });
+
+    setClusters(oCountries);
+  };
+
   const { isLoaded } = useJsApiLoader({
     id: "google-map-script",
     googleMapsApiKey: `${process.env.REACT_APP_API_KEY}`,
   });
-
-  const getCountries = () => {
-    const oCountries = new Map();
-    let aCor;
-    networks.forEach((oNetwork) => {
-      aCor = oCountries.get(oNetwork.location.country);
-      if (aCor === undefined) {
-        oCountries.set(oNetwork.location.country, [oNetwork.location]);
-      } else {
-        aCor.push(oNetwork.location);
-        oCountries.set(oNetwork.location.country, aCor);
-      }
-    });
-    let aMarkerClusters = [];
-    let aMarkers = [];
-    oCountries.forEach((networks) => {
-      networks.forEach((location) => {
-        aMarkers.push(new Marker({ position: {lat: location.latitude , lng: location.longitude} }));
-
-      });
-      aMarkerClusters.push(new MarkerClusterer({ aMarkers }));
-      aMarkers = [];
-    });
-    debugger;
-  };
 
   return (
     <Div>
@@ -68,18 +62,26 @@ function MapPage() {
           mapContainerStyle={{ width: "100%", height: "100%" }}
           center={{ lat: 38.72726949547492, lng: -9.139262879074261 }}
           zoom={10}
+          onLoad={onMapLoaded}
         >
-          {getCountries()}
-          {/*   {networks.map((position) => {
+          {Array.from(clusters.values()).map((entry) => {
+            debugger;
             return (
-              <Marker
-                position={{
-                  lat: position.location.latitude,
-                  lng: position.location.longitude,
-                }}
-              />
+              <MarkerClusterer>
+                {(clusterer) =>
+                  entry.map((location) => (
+                    <Marker
+                      clusterer={clusterer}
+                      position={{
+                        lat: location.latitude,
+                        lng: location.longitude,
+                      }}
+                    />
+                  ))
+                }
+              </MarkerClusterer>
             );
-          })} */}
+          })}
         </GoogleMap>
       ) : (
         <></>
