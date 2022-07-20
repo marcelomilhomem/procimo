@@ -5,19 +5,22 @@ import {
   Marker,
   MarkerClusterer,
 } from "@react-google-maps/api";
-import styled from "styled-components";
 import { useState, useEffect } from "react";
 import axios from "axios";
+import styled from "styled-components";
+import { useParams } from "react-router-dom";
 
 const Div = styled.div`
-  height: 80vh;
-  width: 60vw;
+  height: 100vh;
+  width: 70vw;
 `;
 
 function MapPage() {
-
   const [networks, setNetworks] = useState([]);
   const [clusters, setClusters] = useState(new Map());
+
+  const [networkStations, setNetworkStations] = useState([]);
+  const { networkId } = useParams();
 
   const fetchApi = () => {
     axios
@@ -28,25 +31,35 @@ function MapPage() {
       .catch((err) => alert(err));
   };
 
+  const stationsApi = () => {
+    axios
+      .get(`http://api.citybik.es/v2/networks/${networkId}`)
+      .then((response) => {
+        console.log(response);
+        setNetworkStations(response.data.networks.stations);
+      })
+      .catch((err) => alert(err));
+  };
+
   useEffect(() => {
     fetchApi();
   }, []);
 
-  //Descrever a função
   const onMapLoaded = () => {
     const oCountries = new Map();
-    let aCoordinates;
+    let aNetworks;
     networks.forEach((oNetwork) => {
-      aCoordinates = oCountries.get(oNetwork.location.country);
-      if (!aCoordinates) {
-        oCountries.set(oNetwork.location.country, [oNetwork.location]);
+      aNetworks = oCountries.get(oNetwork.location.country);
+      if (!aNetworks) {
+        oCountries.set(oNetwork.location.country, [oNetwork]);
       } else {
-        aCoordinates.push(oNetwork.location);
-        oCountries.set(oNetwork.location.country, aCoordinates);
+        aNetworks.push(oNetwork);
+        oCountries.set(oNetwork.location.country, aNetworks);
       }
     });
 
     setClusters(oCountries);
+    console.log(oCountries);
   };
 
   const { isLoaded } = useJsApiLoader({
@@ -64,17 +77,17 @@ function MapPage() {
           zoom={10}
           onLoad={onMapLoaded}
         >
-          {Array.from(clusters.values()).map((entry) => {
-            debugger;
+          {Array.from(clusters.values()).map((oEntry) => {
             return (
               <MarkerClusterer>
                 {(clusterer) =>
-                  entry.map((location) => (
+                  oEntry.map((oNetwork) => (
                     <Marker
+                      onClick={(e) => {}}
                       clusterer={clusterer}
                       position={{
-                        lat: location.latitude,
-                        lng: location.longitude,
+                        lat: oNetwork.location.latitude,
+                        lng: oNetwork.location.longitude,
                       }}
                     />
                   ))
