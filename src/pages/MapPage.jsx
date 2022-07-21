@@ -6,9 +6,8 @@ import {
   MarkerClusterer,
 } from "@react-google-maps/api";
 import { useState, useEffect } from "react";
-import axios from "axios";
 import styled from "styled-components";
-import { useParams } from "react-router-dom";
+import Api from "../service/api.js";
 
 const Div = styled.div`
   height: 100vh;
@@ -20,25 +19,23 @@ function MapPage() {
   const [clusters, setClusters] = useState(new Map());
 
   const [networkStations, setNetworkStations] = useState([]);
-  const { networkId } = useParams();
 
   const fetchApi = () => {
-    axios
-      .get(`http://api.citybik.es/v2/networks`)
+    Api.gNetworks()
       .then((response) => {
         setNetworks(response.data.networks);
       })
       .catch((err) => alert(err));
   };
 
-  const stationsApi = () => {
-    axios
-      .get(`http://api.citybik.es/v2/networks/${networkId}`)
-      .then((response) => {
-        console.log(response);
-        setNetworkStations(response.data.networks.stations);
-      })
-      .catch((err) => alert(err));
+  const handleOnClick = async (id) => {
+    try {
+      let response = await Api.gStations(id);
+      setNetworkStations(response.data.network.stations);
+      console.log(response.data.network.stations);
+    } catch (error) {
+      console.log(error);
+    }
   };
 
   useEffect(() => {
@@ -83,7 +80,9 @@ function MapPage() {
                 {(clusterer) =>
                   oEntry.map((oNetwork) => (
                     <Marker
-                      onClick={(e) => {}}
+                      onClick={() => {
+                        handleOnClick(oNetwork.id);
+                      }}
                       clusterer={clusterer}
                       position={{
                         lat: oNetwork.location.latitude,
