@@ -7,11 +7,11 @@ class CityBike {
     });
   }
 
-  gNetworks = () => {
+  fetchNetworks = () => {
     return this.api.get();
   };
 
-  gStations = (id) => {
+  fetchStations = (id) => {
     return this.api.get(`/${id}`);
   };
 }
