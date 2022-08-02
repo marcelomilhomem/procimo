@@ -20,8 +20,9 @@ function MapPage() {
   const [networks, setNetworks] = useState([]);
   const [clusters, setClusters] = useState(new Map());
   const [stations, setStations] = useState([]);
+  //console.log(stations);
 
-  const [selectedId, setSelectedId] = useState();
+  const [selectedId, setSelectedId] = useState("");
 
   //Get all networks from API.
   const fetchApi = async () => {
@@ -33,36 +34,31 @@ function MapPage() {
     }
   };
 
-  //Clicking each marker, get stations from each Network ID
-  const onClickShowStations = async () => {
-    try {
-      let response = await Api.fetchStations(selectedId);
-      setStations(
-        response.data.network.stations.map((oStation) => {
-          oStation.location = {
-            latitude: oStation.latitude,
-            longitude: oStation.longitude,
-            country: response.data.network.location.country,
-          };
-          return oStation;
-        })
-      );
-      upDateClustersState(stations);
-    } catch (error) {
-      console.log(error);
-    }
-  };
-
   //Load the map with Networks opening the page
   useEffect(() => {
     fetchApi();
   }, []);
 
+  //Buckets
+  const upDateClustersState = (aEntries) => {
+    const oClusters = new Map();
+    let aMarkers;
+    aEntries.forEach((oEntry) => {
+      aMarkers = oClusters.get(oEntry.location.country);
+      if (!aMarkers) {
+        oClusters.set(oEntry.location.country, [oEntry]);
+      } else {
+        aMarkers.push(oEntry);
+        oClusters.set(oEntry.location.country, aMarkers);
+      }
+    });
+    setClusters(oClusters);
+  };
+
   //Function trigged by event onClick
   //Search in all networks with the ID clicked and create a new property bShowPopup all false and change to true if match the ID
   //Then update ID state and Network State
   const onShowPopup = (id) => {
-    console.log(id);
     let aUpdated;
     if (id) {
       aUpdated = networks.map((oNetwork) => {
@@ -86,8 +82,32 @@ function MapPage() {
       oNetwork.bShowPopup = false;
       return oNetwork;
     });
-    setSelectedId();
+    setSelectedId("");
     setNetworks(aUpdated);
+  };
+
+  //Clicking each marker, get stations from each Network ID
+  const onClickShowStations = async () => {
+    try {
+      let response = await Api.fetchStations(selectedId);
+      setStations(
+        response.data.network.stations.map((oStation) => {
+          oStation.location = {
+            latitude: oStation.latitude,
+            longitude: oStation.longitude,
+            country: response.data.network.location.country,
+          };
+          return oStation;
+        })
+      );
+      upDateClustersState(stations);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const onBackButtonPress = () => {
+    upDateClustersState(networks);
   };
 
   const onMapLoaded = (oMap) => {
@@ -99,26 +119,6 @@ function MapPage() {
       controlButtonDiv
     );
     oMap.controls[google.maps.ControlPosition.TOP_RIGHT].push(controlButtonDiv);
-  };
-
-  //Buckets Countries
-  const upDateClustersState = (aEntries) => {
-    const oClusters = new Map();
-    let aMarkers;
-    aEntries.forEach((oEntry) => {
-      aMarkers = oClusters.get(oEntry.location.country);
-      if (!aMarkers) {
-        oClusters.set(oEntry.location.country, [oEntry]);
-      } else {
-        aMarkers.push(oEntry);
-        oClusters.set(oEntry.location.country, aMarkers);
-      }
-    });
-    setClusters(oClusters);
-  };
-
-  const onBackButtonPress = () => {
-    upDateClustersState(networks);
   };
 
   const { isLoaded } = useJsApiLoader({
