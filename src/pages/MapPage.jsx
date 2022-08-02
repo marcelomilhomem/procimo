@@ -37,7 +37,8 @@ function MapPage() {
   //Load the map with Networks opening the page
   useEffect(() => {
     fetchApi();
-  }, []);
+  }, [clusters]);
+
 
   //Buckets
   const upDateClustersState = (aEntries) => {
